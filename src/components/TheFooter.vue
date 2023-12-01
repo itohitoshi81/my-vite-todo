@@ -6,7 +6,7 @@
   </footer>
 </template>
 
-<style>
+<style scoped>
 .footer {
   margin-top: 15px;
   height: 30px;
