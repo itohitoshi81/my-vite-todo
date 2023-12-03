@@ -1,26 +1,48 @@
 <script setup>
 import { ref } from 'vue';
+import { useTodoList } from '/src/composables/useToDoList';
+import BaseButton from './BaseButton.vue';
+import AddButton from './AddButton.vue';
+
 const todoRef = ref('');
-const todoListRef = ref([]);
-const ls = localStorage.todoList;
-todoListRef.value = ls ? JSON.parse(ls) : [];
+const isEditRef = ref(false);
+
+const { todoListRef, add, show, edit, del, check, countFin } = useTodoList();
+
 const addTodo = () => {
-  // IDを簡易的にミリ秒で登録
-  const id = new Date().getTime();
-  console.log(id);
-
-  // 配列に入力TODOを格納
-  todoListRef.value.push({ id: id, task: todoRef.value });
-
-  // ローカルストレージに登録
-  localStorage.todoList = JSON.stringify(todoListRef.value);
-
+  add(todoRef.value);
   // 登録後は入力欄を空にする
   todoRef.value = '';
+};
+
+const showTodo = (id) => {
+  todoRef.value = show(id);
+  isEditRef.value = true;
+};
+
+const editTodo = () => {
+  edit(todoRef.value);
+  isEditRef.value = false;
+  todoRef.value = '';
+};
+
+const deleteTodo = (id) => {
+  del(id);
+};
+
+const changeCheck = (id) => {
+  check(id);
+};
+
+const countFinMethod = () => {
+  // console.log('method');
+  const finArr = todoListRef.value.filter((todo) => todo.checked);
+  return finArr.length;
 };
 </script>
 
 <template>
+  <!-- <BaseButton /> -->
   <div class="box_input">
     <input
       type="text"
@@ -28,19 +50,32 @@ const addTodo = () => {
       v-model="todoRef"
       placeholder="+ TODOを入力"
     />
-    <button class="btn" @click="addTodo">追加</button>
+    <BaseButton color="green" @on-click="editTodo" v-if="isEditRef"
+      >変更</BaseButton
+    >
+    <AddButton @add-click="addTodo" v-else>追加</AddButton>
     <div class="box_list">
       <div class="todo_list" v-for="todo in todoListRef" :key="todo.id">
-        <div class="todo">
-          <input type="checkbox" class="check" />
+        <div class="todo" :class="{ fin: todo.checked }">
+          <input
+            type="checkbox"
+            class="check"
+            @change="changeCheck(todo.id)"
+            :checked="todo.checked"
+          />
           <label>{{ todo.task }}</label>
         </div>
         <div class="btns">
-          <button class="btn green">編</button>
-          <button class="btn pink">削</button>
+          <BaseButton color="green" @on-click="showTodo">編</BaseButton>
+          <BaseButton color="pink" @on-click="deleteTodo">削</BaseButton>
         </div>
       </div>
     </div>
+  </div>
+  <div class="finCount">
+    <span>完了　：{{ countFin }}</span>
+    <br />
+    <span>未完了：{{ todoListRef.length - countFinMethod() }}</span>
   </div>
 </template>
 
@@ -56,14 +91,14 @@ const addTodo = () => {
   border: 1px solid #aaa;
   border-radius: 6px;
 }
-.btn {
+/* .btn {
   padding: 8px;
   background-color: #03a9f4;
   border-radius: 6px;
   color: #fff;
   text-align: center;
   font-size: 14px;
-}
+} */
 .box_list {
   margin-top: 20px;
   display: flex;
@@ -94,10 +129,19 @@ const addTodo = () => {
   gap: 4px;
 }
 
-.green {
+/* .green {
   background-color: #00c853;
-}
-.pink {
+} */
+/* .pink {
   background-color: #ff4081;
+} */
+.fin {
+  text-decoration: line-through;
+  background-color: #ddd;
+  color: #777;
+}
+.finCount {
+  margin-top: 8px;
+  font-size: 0.8em;
 }
 </style>
